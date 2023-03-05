@@ -1,0 +1,42 @@
+@font-face {
+    font-family: Libertinus;
+    font-style: normal;
+    font-weight: normal;
+    src: url("assets/Libertinus/LibertinusSerif-Regular.woff2") format("woff");
+}
+@font-face {
+    font-family: Libertinus;
+    font-style: normal;
+    font-weight: bold;
+    src: url("assets/Libertinus/LibertinusSerif-Bold.woff2") format("woff");
+}
+@font-face {
+    font-family: Libertinus;
+    font-style: italic;
+    font-weight: normal;
+    src: url("assets/Libertinus/LibertinusSerif-Italic.woff2") format("woff");
+}
+@font-face {
+    font-family: LibertinusKeyboard;
+    src: url("assets/Libertinus/LibertinusKeyboard-Regular.woff2") format("woff");
+}
+
+* {
+    font-family: "Libertinus", sans-serif;
+    text-align: center;
+}
+
+body {
+    width: 400px;
+    height: 300px;
+}
+
+p {
+    font-size: 13pt;
+}
+
+button {
+    font-family: "LibertinusKeyboard", sans-serif;
+    font-size: 14pt;
+    padding: 15px;
+}
