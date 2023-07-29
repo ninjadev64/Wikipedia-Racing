@@ -40,3 +40,8 @@ button {
     font-size: 14pt;
     padding: 15px;
 }
+
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+    display: none;
+}

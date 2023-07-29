@@ -1,0 +1,2 @@
+document.getElementById("host").addEventListener("click", () => window.location.href = "popup_host_init.html");
+document.getElementById("join").addEventListener("click", () => window.location.href = "popup_client_init.html");

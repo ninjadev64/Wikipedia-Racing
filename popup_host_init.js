@@ -29,8 +29,7 @@ function setReady(page) {
 		case "end": endReady = true; break;
 	}
 	if (startReady && endReady) {
-		chrome.runtime.sendMessage(endPage.fullurl);
-		chrome.tabs.update({ url: startPage.fullurl });
+		chrome.runtime.sendMessage({ type: "host_init", data: { startPage: startPage, endPage: endPage, username: document.getElementById("username").value }});
 	}
 }
 
@@ -49,7 +48,6 @@ function go() {
 		let data = await response.json();
 		startPage = data.query.pages[0];
 		setReady("start");
-		
 	});
 	fetch(`https://en.wikipedia.org/w/api.php?action=query&pageids=${endValidation}&format=json&formatversion=2&prop=info&inprop=url`).then(async (response) => {
 		let data = await response.json();
@@ -62,3 +60,12 @@ document.getElementById("play").addEventListener("click", go);
 
 registerAutocomplete(document.getElementById("start"), document.getElementById("start-autocomplete"));
 registerAutocomplete(document.getElementById("end"), document.getElementById("end-autocomplete"));
+
+chrome.runtime.onMessage.addListener(({ type, _ }) => {
+	switch (type) {
+		case "gameCreated": {
+			window.location.href = "popup_host_waiting.html";
+			break;
+		}
+	}
+});
