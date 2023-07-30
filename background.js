@@ -12,13 +12,30 @@ playon.init({
 let currentGame;
 
 function globalDataUpdated(data) {
-	if (data.gameState != "playing") return;
-	chrome.tabs.update({ url: data.startPage.url });
-	chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
-		if (changeInfo.url == data.endPage.url) {
-			chrome.tabs.update({ url: `chrome-extension://${chrome.runtime.id}/win.html` });
+	switch (data.gameState) {
+		case "playing": {
+			chrome.tabs.update({ url: data.startPage.url });
+			currentGame.updatePlayerData({ startTime: new Date().getTime() });
+			chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+				if (changeInfo.url == data.endPage.url) {
+					currentGame.updatePlayerData({ endTime: new Date().getTime() });
+					chrome.tabs.update({ url: `chrome-extension://${chrome.runtime.id}/finished.html` });
+				}
+			});
+			currentGame.on("playerUpdated", (name, data) => {
+				if (data.endTime) {
+					chrome.runtime.sendMessage({ type: "playerFinished", data: { name, allPlayers: currentGame.players }});
+				}
+			});
+			break;
 		}
-	});
+		case "finished": {
+			chrome.runtime.sendMessage({ type: "gameFinished" });
+			currentGame.leave();
+			currentGame = undefined;
+			break;
+		}
+	}
 }
 
 chrome.runtime.onMessage.addListener(({ type, data }) => {
@@ -26,6 +43,7 @@ chrome.runtime.onMessage.addListener(({ type, data }) => {
 		case "host_init": {
 			playon.createGame().then((id) => {
 				playon.joinGame(id, data.username, {}).then((game) => {
+					try { if (currentGame) currentGame.leave(); } catch {}
 					currentGame = game;
 					currentGame.updateGlobalData({
 						gameState: "waiting",
@@ -39,12 +57,22 @@ chrome.runtime.onMessage.addListener(({ type, data }) => {
 			break;
 		}
 		case "host_start": {
+			let inProgress = Object.keys(currentGame.players);
+			currentGame.on("playerUpdated", (name, data) => {
+				if (data.endTime) {
+					inProgress = inProgress.filter((n) => { return n != name; });
+					if (inProgress.length == 0) {
+						currentGame.updateGlobalData({ gameState: "finished" });
+					}
+				}
+			});
 			currentGame.updateGlobalData({ gameState: "playing" });
 			break;
 		}
 		case "client_init": {
 			try {
 				playon.joinGame(data.id, data.username, {}).then((game) => {
+					try { if (currentGame) currentGame.leave(); } catch {}
 					currentGame = game;
 					currentGame.on("globalDataUpdated", globalDataUpdated);
 					chrome.runtime.sendMessage({ type: "gameJoined", data: { id: currentGame.id } });
@@ -55,7 +83,7 @@ chrome.runtime.onMessage.addListener(({ type, data }) => {
 			break;
 		}
 		case "gameInfoRequest": {
-			chrome.runtime.sendMessage({ type: "gameInfoResponse", data: { id: currentGame.id, globalData: currentGame.globalData }});
+			chrome.runtime.sendMessage({ type: "gameInfoResponse", data: { id: currentGame.id, globalData: currentGame.globalData, players: currentGame.players }});
 			break;
 		}
 	}
