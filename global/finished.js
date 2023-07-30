@@ -36,7 +36,7 @@ chrome.runtime.onMessage.addListener(({ type, data }) => {
 			console.log("noot");
 			let p = document.createElement("p");
 			let a = document.createElement("a");
-			a.href = "popup_main.html";
+			a.href = "main.html";
 			a.innerText = "Play again";
 			p.appendChild(a);
 			document.body.appendChild(p);

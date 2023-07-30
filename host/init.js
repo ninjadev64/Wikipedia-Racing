@@ -64,7 +64,7 @@ registerAutocomplete(document.getElementById("end"), document.getElementById("en
 chrome.runtime.onMessage.addListener(({ type, _ }) => {
 	switch (type) {
 		case "gameCreated": {
-			window.location.href = "popup_host_waiting.html";
+			window.location.href = "waiting.html";
 			break;
 		}
 	}

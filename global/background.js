@@ -19,7 +19,7 @@ function globalDataUpdated(data) {
 			chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
 				if (changeInfo.url == data.endPage.url) {
 					currentGame.updatePlayerData({ endTime: new Date().getTime() });
-					chrome.tabs.update({ url: `chrome-extension://${chrome.runtime.id}/finished.html` });
+					chrome.tabs.update({ url: `chrome-extension://${chrome.runtime.id}/global/finished.html` });
 				}
 			});
 			currentGame.on("playerUpdated", (name, data) => {

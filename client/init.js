@@ -9,7 +9,7 @@ chrome.runtime.onMessage.addListener(({ type, data }) => {
 			break;
 		}
 		case "gameJoined": {
-			window.location.href = "popup_client_waiting.html";
+			window.location.href = "waiting.html";
 			break;
 		}
 	}

@@ -7,10 +7,10 @@
 		"1024": "images/icon-1024.png"
 	},
 	"action": {
-		"default_popup": "popup_entrypoint.html"
+		"default_popup": "global/entrypoint.html"
 	},
 	"background": {
-		"service_worker": "background.js",
+		"service_worker": "global/background.js",
 		"type": "module"
 	},
 	"host_permissions": [

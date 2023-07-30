@@ -1,0 +1,2 @@
+document.getElementById("host").addEventListener("click", () => window.location.href = "../host/init.html");
+document.getElementById("join").addEventListener("click", () => window.location.href = "../client/init.html");
