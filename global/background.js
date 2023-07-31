@@ -15,7 +15,7 @@ let gameTabId;
 const wikipediaRegex = /^(?:https?:\/\/)?(?:[^.]+\.)?wikipedia\.org(\/.*)?$/;
 const extensionRegex = /chrome-extension:\/+.{32}\/.*/;
 
-let goingBack = false;
+let showErrorMessage = false;
 
 function globalDataUpdated(data) {
 	switch (data.gameState) {
@@ -24,23 +24,59 @@ function globalDataUpdated(data) {
 			currentGame.updatePlayerData({ startTime: new Date().getTime() });
 			chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
 				if (tabId != gameTabId) return;
+				if (!changeInfo.url) return;
 				if (changeInfo.url == data.endPage.url) {
 					currentGame.updatePlayerData({ endTime: new Date().getTime() });
 					chrome.tabs.update(gameTabId, { url: `chrome-extension://${chrome.runtime.id}/global/finished.html` });
 				}
-				if (changeInfo.url && !wikipediaRegex.test(changeInfo.url) && !extensionRegex.test(changeInfo.url)) {
-					goingBack = true;
-					chrome.tabs.goBack(gameTabId);
-				} else if (goingBack) {
+				if (wikipediaRegex.test(changeInfo.url)) {
 					chrome.scripting.executeScript({
 						target: { tabId: gameTabId },
-						files: [ "global/injection.js" ]
+						world: "MAIN",
+						func: () => {
+							document.getElementById("searchform").style.setProperty("display", "none", "important");
+						}
 					});
-					goingBack = false;
+					if (showErrorMessage) {
+						chrome.scripting.executeScript({
+							target: { tabId: gameTabId },
+							world: "MAIN",
+							func: () => {
+								let n = document.createElement("div");
+								n.style = `
+									position: fixed;
+									top: 20px;
+									width: fit-content;
+									left: 0;
+									right: 0;
+									margin: 0 auto;
+									padding: 15px;
+									border-radius: 10px;
+									background-color: #fd3d3d;
+									color: #eeeeee;
+									transition: opacity 1s;
+								`;
+								n.innerText = "You can't do that!";
+								document.body.appendChild(n);
+								setTimeout(() => { n.style.setProperty("opacity", "0"); }, 1500);
+								setTimeout(() => { n.remove(); }, 3000);
+							}
+						});
+						showErrorMessage = false;
+					}
+				} else if (!extensionRegex.test(changeInfo.url)) {
+					showErrorMessage = true;
+					chrome.tabs.goBack(gameTabId);
 				}
 			});
+			chrome.tabs.onRemoved.addListener((tabId, _) => {
+				if (tabId != gameTabId) return;
+				currentGame.updatePlayerData({ hasLeftGame: true });
+				currentGame.leave();
+				currentGame = undefined;
+			});
 			currentGame.on("playerUpdated", (name, data) => {
-				if (data.endTime) {
+				if (data.endTime && !data.hasLeftGame) {
 					chrome.runtime.sendMessage({ type: "playerFinished", data: { name, allPlayers: currentGame.players }}).catch(() => {});
 				}
 			});
@@ -77,7 +113,7 @@ chrome.runtime.onMessage.addListener(({ type, data }) => {
 		case "host_start": {
 			let inProgress = Object.keys(currentGame.players);
 			currentGame.on("playerUpdated", (name, data) => {
-				if (data.endTime) {
+				if (data.endTime || data.hasLeftGame) {
 					inProgress = inProgress.filter((n) => { return n != name; });
 					if (inProgress.length == 0) {
 						currentGame.updateGlobalData({ gameState: "finished" });

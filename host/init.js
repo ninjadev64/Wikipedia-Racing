@@ -1,10 +1,12 @@
 let startPage;
 let endPage;
 
+let selectedWiki = "en";
+
 function registerAutocomplete(input, datalist) {
 	input.addEventListener("input", (event) => {
 		let value = event.target.value;
-		fetch(`https://en.wikipedia.org/w/api.php?format=json&action=query&list=prefixsearch&pssearch=${value}`).then(async (response) => {
+		fetch(`https://${selectedWiki}.wikipedia.org/w/api.php?format=json&action=query&list=prefixsearch&pssearch=${value}`).then(async (response) => {
 			datalist.innerHTML = "";
 			let json = await response.json();
 			json.query.prefixsearch.forEach((item) => {
@@ -51,12 +53,12 @@ function go() {
 		alert("Enter a valid end page value!");
 		return;
 	}
-	fetch(`https://en.wikipedia.org/w/api.php?action=query&pageids=${startValidation}&format=json&formatversion=2&prop=info&inprop=url`).then(async (response) => {
+	fetch(`https://${selectedWiki}.wikipedia.org/w/api.php?action=query&pageids=${startValidation}&format=json&formatversion=2&prop=info&inprop=url`).then(async (response) => {
 		let data = await response.json();
 		startPage = data.query.pages[0];
 		setReady("start");
 	});
-	fetch(`https://en.wikipedia.org/w/api.php?action=query&pageids=${endValidation}&format=json&formatversion=2&prop=info&inprop=url`).then(async (response) => {
+	fetch(`https://${selectedWiki}.wikipedia.org/w/api.php?action=query&pageids=${endValidation}&format=json&formatversion=2&prop=info&inprop=url`).then(async (response) => {
 		let data = await response.json();
 		endPage = data.query.pages[0];
 		setReady("end");	
@@ -67,6 +69,12 @@ document.getElementById("play").addEventListener("click", go);
 
 registerAutocomplete(document.getElementById("start"), document.getElementById("start-autocomplete"));
 registerAutocomplete(document.getElementById("end"), document.getElementById("end-autocomplete"));
+
+let wikiSelect = document.getElementById("wiki");
+allWikis.forEach((wiki) => {
+	wikiSelect.insertAdjacentHTML("beforeend", `<option value=${wiki}> ${wiki} </option>`);
+});
+wikiSelect.addEventListener("change", () => { selectedWiki = wikiSelect.value; });
 
 chrome.runtime.onMessage.addListener(({ type, _ }) => {
 	switch (type) {
