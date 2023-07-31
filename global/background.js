@@ -15,6 +15,8 @@ let gameTabId;
 const wikipediaRegex = /^(?:https?:\/\/)?(?:[^.]+\.)?wikipedia\.org(\/.*)?$/;
 const extensionRegex = /chrome-extension:\/+.{32}\/.*/;
 
+let goingBack = false;
+
 function globalDataUpdated(data) {
 	switch (data.gameState) {
 		case "playing": {
@@ -27,7 +29,14 @@ function globalDataUpdated(data) {
 					chrome.tabs.update(gameTabId, { url: `chrome-extension://${chrome.runtime.id}/global/finished.html` });
 				}
 				if (changeInfo.url && !wikipediaRegex.test(changeInfo.url) && !extensionRegex.test(changeInfo.url)) {
+					goingBack = true;
 					chrome.tabs.goBack(gameTabId);
+				} else if (goingBack) {
+					chrome.scripting.executeScript({
+						target: { tabId: gameTabId },
+						files: [ "global/injection.js" ]
+					});
+					goingBack = false;
 				}
 			});
 			currentGame.on("playerUpdated", (name, data) => {

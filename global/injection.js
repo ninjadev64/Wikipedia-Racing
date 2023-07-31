@@ -1,0 +1,16 @@
+let n = document.createElement("div");
+n.style.setProperty("position", "fixed");
+n.style.setProperty("top", "20px");
+n.style.setProperty("left", "0");
+n.style.setProperty("right", "0");
+n.style.setProperty("width", "fit-content");
+n.style.setProperty("margin", "0 auto");
+n.style.setProperty("padding", "15px");
+n.style.setProperty("border-radius", "10px");
+n.style.setProperty("background-color", "#fd3d3d");
+n.style.setProperty("color", "#eeeeee");
+n.style.setProperty("transition", "opacity 1s");
+n.innerText = "You can't do that!";
+document.body.appendChild(n);
+setTimeout(() => { n.style.setProperty("opacity", "0"); }, 1500);
+setTimeout(() => { n.remove(); }, 3000);

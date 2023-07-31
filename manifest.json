@@ -13,7 +13,7 @@
 		"service_worker": "global/background.js",
 		"type": "module"
 	},
-	"permissions": [ "tabs" ],
+	"permissions": [ "tabs", "scripting" ],
 	"host_permissions": [
 		"https://*.wikipedia.org/*"
 	]
