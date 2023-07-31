@@ -29,7 +29,14 @@ function setReady(page) {
 		case "end": endReady = true; break;
 	}
 	if (startReady && endReady) {
-		chrome.runtime.sendMessage({ type: "host_init", data: { startPage: startPage, endPage: endPage, username: document.getElementById("username").value }});
+		chrome.tabs.query({ active: true, lastFocusedWindow: true }).then(([tab]) => {
+			chrome.runtime.sendMessage({ type: "host_init", data: {
+				startPage: startPage,
+				endPage: endPage,
+				username: document.getElementById("username").value,
+				tabId: tab.id
+			}});
+		});
 	}
 }
 

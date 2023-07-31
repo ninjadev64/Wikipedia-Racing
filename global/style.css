@@ -41,6 +41,13 @@ button {
     padding: 15px;
 }
 
+input {
+    text-align: left;
+    font-size: 16px;
+    padding: 10px;
+    border-radius: 5px;
+}
+
 input::-webkit-outer-spin-button,
 input::-webkit-inner-spin-button {
     display: none;

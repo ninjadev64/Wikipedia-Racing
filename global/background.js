@@ -10,21 +10,29 @@ playon.init({
 });
 
 let currentGame;
+let gameTabId;
+
+const wikipediaRegex = /^(?:https?:\/\/)?(?:[^.]+\.)?wikipedia\.org(\/.*)?$/;
+const extensionRegex = /chrome-extension:\/+.{32}\/.*/;
 
 function globalDataUpdated(data) {
 	switch (data.gameState) {
 		case "playing": {
-			chrome.tabs.update({ url: data.startPage.url });
+			chrome.tabs.update(gameTabId, { url: data.startPage.url });
 			currentGame.updatePlayerData({ startTime: new Date().getTime() });
 			chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+				if (tabId != gameTabId) return;
 				if (changeInfo.url == data.endPage.url) {
 					currentGame.updatePlayerData({ endTime: new Date().getTime() });
-					chrome.tabs.update({ url: `chrome-extension://${chrome.runtime.id}/global/finished.html` });
+					chrome.tabs.update(gameTabId, { url: `chrome-extension://${chrome.runtime.id}/global/finished.html` });
+				}
+				if (changeInfo.url && !wikipediaRegex.test(changeInfo.url) && !extensionRegex.test(changeInfo.url)) {
+					chrome.tabs.goBack(gameTabId);
 				}
 			});
 			currentGame.on("playerUpdated", (name, data) => {
 				if (data.endTime) {
-					chrome.runtime.sendMessage({ type: "playerFinished", data: { name, allPlayers: currentGame.players }});
+					chrome.runtime.sendMessage({ type: "playerFinished", data: { name, allPlayers: currentGame.players }}).catch(() => {});
 				}
 			});
 			break;
@@ -41,6 +49,7 @@ function globalDataUpdated(data) {
 chrome.runtime.onMessage.addListener(({ type, data }) => {
 	switch (type) {
 		case "host_init": {
+			gameTabId = data.tabId;
 			playon.createGame().then((id) => {
 				playon.joinGame(id, data.username, {}).then((game) => {
 					try { if (currentGame) currentGame.leave(); } catch {}
@@ -70,6 +79,7 @@ chrome.runtime.onMessage.addListener(({ type, data }) => {
 			break;
 		}
 		case "client_init": {
+			gameTabId = data.tabId;
 			try {
 				playon.joinGame(data.id, data.username, {}).then((game) => {
 					try { if (currentGame) currentGame.leave(); } catch {}
@@ -82,8 +92,8 @@ chrome.runtime.onMessage.addListener(({ type, data }) => {
 			}
 			break;
 		}
-		case "gameInfoRequest": {
-			chrome.runtime.sendMessage({ type: "gameInfoResponse", data: { id: currentGame.id, globalData: currentGame.globalData, players: currentGame.players }});
+		case "game_info_request": {
+			chrome.runtime.sendMessage({ type: "game_info_response", data: { id: currentGame.id, globalData: currentGame.globalData, players: currentGame.players }});
 			break;
 		}
 	}

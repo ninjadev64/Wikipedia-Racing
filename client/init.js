@@ -1,5 +1,11 @@
 document.getElementById("join").addEventListener("click", () => {
-	chrome.runtime.sendMessage({ type: "client_init", data: { id: parseInt(document.getElementById("id").value), username: document.getElementById("username").value }});
+	chrome.tabs.query({ active: true, lastFocusedWindow: true }).then(([tab]) => {
+		chrome.runtime.sendMessage({ type: "client_init", data: {
+			id: parseInt(document.getElementById("id").value),
+			username: document.getElementById("username").value,
+			tabId: tab.id
+		}});
+	});
 });
 
 chrome.runtime.onMessage.addListener(({ type, data }) => {
