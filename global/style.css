@@ -35,6 +35,10 @@ p, a, span, li {
     font-size: 12pt;
 }
 
+a {
+    color: #2222dd !important;
+}
+
 button {
     font-family: "LibertinusKeyboard", sans-serif;
     font-size: 14pt;

@@ -12,6 +12,13 @@ playon.init({
 let currentGame;
 let gameTabId;
 
+function leaveGame() {
+	if (currentGame) try {
+		currentGame.updatePlayerData({ hasLeftGame: true });
+		currentGame.leave();
+	} catch {}
+}
+
 const wikipediaRegex = /^(?:https?:\/\/)?(?:[^.]+\.)?wikipedia\.org(\/.*)?$/;
 const extensionRegex = /chrome-extension:\/+.{32}\/.*/;
 
@@ -71,9 +78,7 @@ function globalDataUpdated(data) {
 			});
 			chrome.tabs.onRemoved.addListener((tabId, _) => {
 				if (tabId != gameTabId) return;
-				currentGame.updatePlayerData({ hasLeftGame: true });
-				currentGame.leave();
-				currentGame = undefined;
+				leaveGame();
 			});
 			currentGame.on("playerUpdated", (name, data) => {
 				if (data.endTime && !data.hasLeftGame) {
@@ -84,8 +89,7 @@ function globalDataUpdated(data) {
 		}
 		case "finished": {
 			chrome.runtime.sendMessage({ type: "gameFinished" });
-			currentGame.leave();
-			currentGame = undefined;
+			leaveGame();
 			break;
 		}
 	}
@@ -97,7 +101,7 @@ chrome.runtime.onMessage.addListener(({ type, data }) => {
 			gameTabId = data.tabId;
 			playon.createGame().then((id) => {
 				playon.joinGame(id, data.username, {}).then((game) => {
-					try { if (currentGame) currentGame.leave(); } catch {}
+					leaveGame();
 					currentGame = game;
 					currentGame.updateGlobalData({
 						gameState: "waiting",
@@ -111,13 +115,9 @@ chrome.runtime.onMessage.addListener(({ type, data }) => {
 			break;
 		}
 		case "host_start": {
-			let inProgress = Object.keys(currentGame.players);
 			currentGame.on("playerUpdated", (name, data) => {
-				if (data.endTime || data.hasLeftGame) {
-					inProgress = inProgress.filter((n) => { return n != name; });
-					if (inProgress.length == 0) {
-						currentGame.updateGlobalData({ gameState: "finished" });
-					}
+				if (Object.values(currentGame.players).every(p => p.hasOwnProperty("endTime") || p.hasOwnProperty("hasLeftGame"))) {
+					currentGame.updateGlobalData({ gameState: "finished" });
 				}
 			});
 			currentGame.updateGlobalData({ gameState: "playing" });
@@ -127,7 +127,7 @@ chrome.runtime.onMessage.addListener(({ type, data }) => {
 			gameTabId = data.tabId;
 			try {
 				playon.joinGame(data.id, data.username, {}).then((game) => {
-					try { if (currentGame) currentGame.leave(); } catch {}
+					leaveGame();
 					currentGame = game;
 					currentGame.on("globalDataUpdated", globalDataUpdated);
 					chrome.runtime.sendMessage({ type: "gameJoined", data: { id: currentGame.id } });
