@@ -9,18 +9,35 @@ playon.init({
 	appId: "1:1092381601552:web:ed125e0a6c8c95804e7f95"
 });
 
+clients.matchAll().then((clients) => {
+	let d = true;
+	for (const client of clients) {
+		if (client.url == "global/offscreen.html") d = false;
+	}
+	if (d) {
+		chrome.offscreen.createDocument({
+			url: "global/offscreen.html",
+			reasons: [ "WORKERS" ],
+			justification: "Service worker keepalive workaround"
+		});
+	}
+});
+
 let currentGame;
 let gameTabId;
+let visitedPages = {};
 
 function leaveGame() {
 	if (currentGame) try {
 		currentGame.updatePlayerData({ hasLeftGame: true });
 		currentGame.leave();
 	} catch {}
+	visitedPages = {};
 }
 
 const wikipediaRegex = /^(?:https?:\/\/)?(?:[^.]+\.)?wikipedia\.org(\/.*)?$/;
-const extensionRegex = /chrome-extension:\/+.{32}\/.*/;
+const wikiPageRegex = /^https?:\/\/?.*\.wikipedia\.org\/wiki\/([^\/|#|\?]+).*$/;
+const extensionRegex = /^chrome-extension:\/+.{32}\/.*$/;
 
 let showErrorMessage = false;
 
@@ -32,9 +49,14 @@ function globalDataUpdated(data) {
 			chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
 				if (tabId != gameTabId) return;
 				if (!changeInfo.url) return;
-				if (changeInfo.url == data.endPage.url) {
-					currentGame.updatePlayerData({ endTime: new Date().getTime() });
-					chrome.tabs.update(gameTabId, { url: `chrome-extension://${chrome.runtime.id}/global/finished.html` });
+				let matches = wikiPageRegex.exec(changeInfo.url);
+				if (matches) {
+					if (decodeURIComponent(matches[1]) == data.endPage.equatable) {
+						currentGame.updatePlayerData({ endTime: new Date().getTime() });
+						chrome.tabs.update(gameTabId, { url: `chrome-extension://${chrome.runtime.id}/global/finished.html` });
+					}
+					visitedPages[decodeURIComponent(matches[1])] = true;
+					currentGame.updatePlayerData({ visitedPages });
 				}
 				if (wikipediaRegex.test(changeInfo.url)) {
 					chrome.scripting.executeScript({
@@ -106,7 +128,7 @@ chrome.runtime.onMessage.addListener(({ type, data }) => {
 					currentGame.updateGlobalData({
 						gameState: "waiting",
 						startPage: { url: data.startPage.fullurl, title: data.startPage.title },
-						endPage: { url: data.endPage.fullurl, title: data.endPage.title }
+						endPage: { url: data.endPage.fullurl, title: data.endPage.title, equatable: decodeURIComponent(wikiPageRegex.exec(data.endPage.fullurl)[1]) }
 					});
 					currentGame.on("globalDataUpdated", globalDataUpdated);
 					chrome.runtime.sendMessage({ type: "gameCreated", data: { id } });
@@ -139,6 +161,10 @@ chrome.runtime.onMessage.addListener(({ type, data }) => {
 		}
 		case "game_info_request": {
 			chrome.runtime.sendMessage({ type: "game_info_response", data: { id: currentGame.id, globalData: currentGame.globalData, players: currentGame.players }});
+			break;
+		}
+		case "service_worker_keepalive": {
+			console.debug("Keepalive ping received");
 			break;
 		}
 	}

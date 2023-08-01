@@ -12,7 +12,7 @@ function repopulateLeaderboard(players) {
 	leaderboard.innerHTML = "";
 	p.forEach((player) => {
 		let l = document.createElement("li");
-		l.innerHTML = `${((player.endTime - player.startTime) / 1000).toFixed(1)}s:<b> ${player.name} </b>`;
+		l.innerHTML = `${((player.endTime - player.startTime) / 1000).toFixed(1)}s, ${Object.keys(player.visitedPages).length} unique pages:<b> ${player.name} </b>`;
 		leaderboard.appendChild(l);
 	});
 }

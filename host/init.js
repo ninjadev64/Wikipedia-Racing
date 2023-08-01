@@ -18,9 +18,7 @@ function registerAutocomplete(input, datalist) {
 
 function validateDatalist(datalistId, inputId) {
 	var option = document.querySelector("#" + datalistId + " option[value='" + document.getElementById(inputId).value + "']");
-	if (option != null) {
-		return option.getAttribute("wiki-id");
-	}
+	if (option) return option.getAttribute("wiki-id");
 	return null;
 }
 
@@ -44,12 +42,12 @@ function setReady(page) {
 
 function go() {
 	let startValidation = validateDatalist("start-autocomplete", "start");
-	if (startValidation == null) {
+	if (!startValidation) {
 		alert("Enter a valid start page value!");
 		return;
 	}
 	let endValidation = validateDatalist("end-autocomplete", "end");
-	if (endValidation == null) {
+	if (!endValidation) {
 		alert("Enter a valid end page value!");
 		return;
 	}

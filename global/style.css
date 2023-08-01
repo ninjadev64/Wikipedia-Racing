@@ -35,6 +35,10 @@ p, a, span, li {
     font-size: 12pt;
 }
 
+ol {
+    padding: 0;
+}
+
 a {
     color: #2222dd !important;
 }
