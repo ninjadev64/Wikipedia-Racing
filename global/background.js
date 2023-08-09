@@ -1,13 +1,6 @@
 import * as playon from "https://ninjadev64.github.io/PlayOn/playon.js";
-playon.init({
-	apiKey: "AIzaSyDaajVVLcvdHzymdORjYJs_g-aIuq40RDs",
-	authDomain: "wikipedia-racing.firebaseapp.com",
-	databaseURL: "https://wikipedia-racing-default-rtdb.europe-west1.firebasedatabase.app",
-	projectId: "wikipedia-racing",
-	storageBucket: "wikipedia-racing.appspot.com",
-	messagingSenderId: "1092381601552",
-	appId: "1:1092381601552:web:ed125e0a6c8c95804e7f95"
-});
+import firebaseConfig from "./assets/firebaseConfig.js";
+playon.init(firebaseConfig);
 
 clients.matchAll().then((clients) => {
 	let d = true;
