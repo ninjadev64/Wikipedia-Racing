@@ -63,3 +63,8 @@ input::-webkit-outer-spin-button,
 input::-webkit-inner-spin-button {
     display: none;
 }
+
+#tutorial {
+    margin: auto;
+    width: 300px;
+}
